@@ -2,7 +2,7 @@ name: Schedule Fetch Flashscore Data
 
 on:
   schedule:
-    - cron: '0 * * * *' # Every hour
+    - cron: '*/5 * * * *' # Every 5 minutes
 
 jobs:
   fetch_flashscore_data:
