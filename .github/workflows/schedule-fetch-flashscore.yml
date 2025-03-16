@@ -1,0 +1,13 @@
+name: Schedule Fetch Flashscore Data
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
+
+jobs:
+  fetch_flashscore_data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Supabase Edge Function
+        run: |
+          curl -X POST https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/flashscore-data
