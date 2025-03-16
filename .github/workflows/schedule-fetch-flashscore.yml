@@ -3,6 +3,7 @@ name: Schedule Fetch Flashscore Data
 on:
   schedule:
     - cron: '*/5 * * * *' # Every 5 minutes
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   fetch_flashscore_data:
