@@ -1,8 +1,8 @@
 name: Schedule Fetch Flashscore Data
 
-on:
-  schedule:
-    - cron: '0 * * * *' # Every hour
+#on:
+#  schedule:
+#    - cron: '0 * * * *' # Every hour
   workflow_dispatch: # Allows manual triggering
 
 jobs:
