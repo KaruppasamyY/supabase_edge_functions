@@ -11,4 +11,7 @@ jobs:
     steps:
       - name: Trigger Supabase Edge Function
         run: |
-          curl -X POST https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/flashscore-data
+          curl -L -X POST 'https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/flashscore-data' \
+            -H 'Authorization: Bearer 8fGsTP007YAuFORSfvbJAJMyvQgGAej3+OBLAHpWvFi8xElstPFJjy6Ky8SWx6M4OsAG7MpgpolBK+/i9AYToA==' \  # Replace with your actual JWT token
+            -H 'Content-Type: application/json' \
+            --data '{"name": "Functions"}'
