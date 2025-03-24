@@ -1,8 +1,8 @@
 name: Schedule Fetch Flashscore Data
 
-#on:
-#  schedule:
-#    - cron: '0 * * * *' # Every hour
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
   workflow_dispatch: # Allows manual triggering
 
 jobs:
@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Trigger Supabase Edge Function
         run: |
-          curl -L -X GET 'https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/flashscore-data'
+          curl -L -X GET 'https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/league_and_match_data'
