@@ -1,0 +1,25 @@
+name: Trigger PostgreSQL Function
+
+on:
+  schedule:
+    - cron: '59 23 * * *'  # Runs at 11:59 PM every day
+
+jobs:
+  trigger-function:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up PostgreSQL
+        uses: harmon758/postgresql-action@v1
+        with:
+          postgresql_version: '13'  # Specify your PostgreSQL version
+          dbname: ${{ secrets.DB_NAME }}
+          username: ${{ secrets.DB_USER }}
+          password: ${{ secrets.DB_PASSWORD }}
+          host: ${{ secrets.DB_HOST }}
+
+      - name: Execute SQL Function
+        run: |
+          psql -h ${{ secrets.DB_HOST }} -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "SELECT your_function_name();"  # Replace with your function name
