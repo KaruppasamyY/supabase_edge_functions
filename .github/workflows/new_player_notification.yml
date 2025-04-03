@@ -1,0 +1,14 @@
+name: Schedule new player notification
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  fetch_flashscore_data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Supabase Edge Function
+        run: |
+          curl -L -X GET 'https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/new_player_notification'
