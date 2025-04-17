@@ -1,8 +1,8 @@
 name: Trigger Lineup Email
 
-on:
-  schedule:
-    - cron: '*/5 * * * *' # Run every 5 minutes (adjust as needed)
+#on:
+#  schedule:
+#    - cron: '*/5 * * * *' # Run every 5 minutes (adjust as needed)
 
 jobs:
   check_and_trigger:
