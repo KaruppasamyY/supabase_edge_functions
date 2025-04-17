@@ -1,0 +1,51 @@
+name: Trigger Lineup Email
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Run every 5 minutes (adjust as needed)
+
+jobs:
+  check_and_trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Optional: If you need to access code in your repo
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Or your preferred Node.js version
+
+      - name: Install Supabase CLI
+        run: npm install -g @supabase/cli
+
+      - name: Get Matches and Trigger Function
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }} # Store these as GitHub secrets
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FUNCTION_INVOCATION_URL: ${{ secrets.FUNCTION_INVOCATION_URL }} # The full URL of your Edge Function
+        run: |
+          #!/usr/bin/env bash
+          # Get current GMT timestamp (seconds since epoch)
+          current_gmt_epoch=$(date -u +%s)
+
+          # Query Supabase for matches starting within the next hour (in GMT)
+          query_result=$(supabase db query "
+            SELECT match_id, start_date, start_time
+            FROM public.match_data
+            WHERE (CAST(start_date || ' ' || start_time AS TIMESTAMP WITH TIME ZONE) AT TIME ZONE 'UTC')::timestamp - (NOW() AT TIME ZONE 'UTC')::timestamp BETWEEN INTERVAL '0 minutes' AND INTERVAL '60 minutes';
+          " --output json)
+
+          echo "Supabase Query Result: $query_result"
+
+          # Parse the JSON result and extract match_ids
+          match_ids=$(echo "$query_result" | jq -r '.[].match_id')
+
+          if [ -n "$match_ids" ]; then
+            echo "Found match IDs to process: $match_ids"
+            IFS=$'\n' read -ra matches_array <<< "$match_ids"
+            for match_id in "${matches_array[@]}"; do
+              echo "Triggering Edge Function for match_id: $match_id"
+              curl -X POST "$FUNCTION_INVOCATION_URL?matchId=$match_id"
+            done
+          else
+            echo "No matches found to process at this time."
+          fi
