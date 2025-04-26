@@ -9,14 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 # Optional: If you need to access code in your repo
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20 # Or your preferred Node.js version
-
-      - name: Install Supabase CLI
-        run: npm install -g @supabase/cli
-
       - name: Get Matches and Trigger Function
         env:
           SUPABASE_URL: "https://pusowcjjqqaioabxxeis.supabase.co"
@@ -24,27 +16,37 @@ jobs:
           FUNCTION_INVOCATION_URL: "https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/lineup-notifier"
         run: |
           #!/usr/bin/env bash
-          # Get current GMT timestamp (seconds since epoch)
-          current_gmt_epoch=$(date -u +%s)
+          SUPABASE_URL="${{ env.SUPABASE_URL }}"
+          SUPABASE_KEY="${{ env.SUPABASE_KEY }}"
+          FUNCTION_URL="${{ env.FUNCTION_INVOCATION_URL }}"
 
-          # Query Supabase for matches starting within the next hour (in GMT)
-          query_result=$(supabase db query "
-            SELECT match_id, start_date, start_time
+          # Construct the SQL query (same as before)
+          SQL_QUERY=$(cat <<EOF
+            SELECT match_id
             FROM public.match_data
-            WHERE (CAST(start_date || ' ' || start_time AS TIMESTAMP WITH TIME ZONE) AT TIME ZONE 'UTC')::timestamp - (NOW() AT TIME ZONE 'UTC')::timestamp BETWEEN INTERVAL '0 minutes' AND INTERVAL '60 minutes';
-          " --output json --url "$SUPABASE_URL" --token "$SUPABASE_KEY")
+            WHERE (CAST(start_date || ' ' || start_time AS TIMESTAMP WITH TIME ZONE)) - (NOW() AT TIME ZONE 'UTC') BETWEEN INTERVAL '0 minutes' AND INTERVAL '60 minutes';
+          EOF
+          )
 
-          echo "Supabase Query Result: $query_result"
+          # Make a POST request to the Supabase REST API to run the query
+          RESPONSE=$(curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -d "{\"query\": \"$SQL_QUERY\"}" \
+            "$SUPABASE_URL/rest/v1/rpc/sql")
 
-          # Parse the JSON result and extract match_ids
-          match_ids=$(echo "$query_result" | jq -r '.[].match_id')
+          echo "Supabase REST API Response: $RESPONSE"
+
+          # Parse the JSON response and extract match_ids
+          match_ids=$(echo "$RESPONSE" | jq -r '.result[].match_id')
 
           if [ -n "$match_ids" ]; then
             echo "Found match IDs to process: $match_ids"
             IFS=$'\n' read -ra matches_array <<< "$match_ids"
             for match_id in "${matches_array[@]}"; do
               echo "Triggering Edge Function for match_id: $match_id"
-              curl "$FUNCTION_INVOCATION_URL?matchId=$match_id" # Using GET as per your Edge Function code
+              curl "$FUNCTION_URL?matchId=$match_id"
             done
           else
             echo "No matches found to process at this time."
