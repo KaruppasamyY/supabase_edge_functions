@@ -1,4 +1,4 @@
-name: Schedule Fetch Flashscore Data
+name: Trigger LineUp
 
 on:
   schedule:
