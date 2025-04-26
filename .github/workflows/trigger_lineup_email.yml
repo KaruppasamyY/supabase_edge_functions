@@ -20,13 +20,12 @@ jobs:
           SUPABASE_KEY="${{ env.SUPABASE_KEY }}"
           FUNCTION_URL="${{ env.FUNCTION_INVOCATION_URL }}"
 
-          # Construct the SQL query (same as before)
-          SQL_QUERY=$(cat <<EOF
+          # Define the SQL query directly as a string
+          SQL_QUERY='
             SELECT match_id
             FROM public.match_data
-            WHERE (CAST(start_date || ' ' || start_time AS TIMESTAMP WITH TIME ZONE)) - (NOW() AT TIME ZONE 'UTC') BETWEEN INTERVAL '0 minutes' AND INTERVAL '60 minutes';
-          EOF
-          )
+            WHERE (CAST(start_date || " " || start_time AS TIMESTAMP WITH TIME ZONE)) - (NOW() AT TIME ZONE "UTC") BETWEEN INTERVAL "0 minutes" AND INTERVAL "60 minutes";
+          '
 
           # Make a POST request to the Supabase REST API to run the query
           RESPONSE=$(curl -X POST \
