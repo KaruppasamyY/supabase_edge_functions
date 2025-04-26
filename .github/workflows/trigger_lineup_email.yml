@@ -1,52 +1,14 @@
-name: Trigger Lineup Email
+name: Schedule Fetch Flashscore Data
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # Run every 5 minutes (adjust as needed)
+    - cron: '0 * * * *' # Every hour
   workflow_dispatch: # Allows manual triggering
+
 jobs:
-  check_and_trigger:
+  fetch_flashscore_data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # Optional: If you need to access code in your repo
-      - name: Get Matches and Trigger Function
-        env:
-          SUPABASE_URL: "https://pusowcjjqqaioabxxeis.supabase.co"
-          SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1c293Y2pqcXFhaW9hYnh4ZWlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTI3MTc3NSwiZXhwIjoyMDU2ODQ3Nzc1fQ.xUZ8AAGHWPf_m-QSGpQIWX9UnQKDtVqWMEYD8qktvAQ"
-          FUNCTION_INVOCATION_URL: "https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/lineup-notifier"
+      - name: Trigger Supabase Edge Function
         run: |
-          #!/usr/bin/env bash
-          SUPABASE_URL="${{ env.SUPABASE_URL }}"
-          SUPABASE_KEY="${{ env.SUPABASE_KEY }}"
-          FUNCTION_URL="${{ env.FUNCTION_INVOCATION_URL }}"
-
-          # Define the SQL query directly as a string
-          SQL_QUERY='
-            SELECT match_id
-            FROM public.match_data
-            WHERE (CAST(start_date || " " || start_time AS TIMESTAMP WITH TIME ZONE)) - (NOW() AT TIME ZONE "UTC") BETWEEN INTERVAL "0 minutes" AND INTERVAL "60 minutes";
-          '
-
-          # Make a POST request to the Supabase REST API to run the query
-          RESPONSE=$(curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" \
-            -d "{\"query\": \"$SQL_QUERY\"}" \
-            "$SUPABASE_URL/rest/v1/rpc/sql")
-
-          echo "Supabase REST API Response: $RESPONSE"
-
-          # Parse the JSON response and extract match_ids
-          match_ids=$(echo "$RESPONSE" | jq -r '.result[].match_id')
-
-          if [ -n "$match_ids" ]; then
-            echo "Found match IDs to process: $match_ids"
-            IFS=$'\n' read -ra matches_array <<< "$match_ids"
-            for match_id in "${matches_array[@]}"; do
-              echo "Triggering Edge Function for match_id: $match_id"
-              curl "$FUNCTION_URL?matchId=$match_id"
-            done
-          else
-            echo "No matches found to process at this time."
-          fi
+          curl -L -X GET 'https://pusowcjjqqaioabxxeis.supabase.co/functions/v1/lineup-notifier'
