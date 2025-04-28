@@ -1,8 +1,8 @@
 name: Trigger LineUp
 
-#on:
-#  schedule:
-#    - cron: '0 * * * *' # Every hour
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
   workflow_dispatch: # Allows manual triggering
 
 jobs:
